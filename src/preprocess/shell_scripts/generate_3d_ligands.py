@@ -2,8 +2,8 @@
 # Open Babel is a chemical toolbox designed to speak the many languages of chemical data.
 # Further Reference: http://openbabel.org/wiki/Main_Page
 # Note: openbabel needs python < 3.7 to run. I'm running this under python 3.6.
-# Note: use openbabel version <= 2.4.0, the higher versions have trouble generating 3d coordinates
-# sometimes, don't really know why.
+# Note: use openbabel version <= 2.4.0 if possible, the higher versions have trouble
+# generating 3d coordinates sometimes, don't really know why.
 
 r"""
 Example Run Output:
@@ -17,8 +17,8 @@ import pandas as pd
 
 
 if __name__ == '__main__':
-    LIGAND_DIR = '../data/ligand.csv'
-    LIGAND_PDB_DIR = '../data/ligand-pdbs'
+    LIGAND_DIR = '../../../data/ligand.csv'
+    LIGAND_PDB_DIR = '../../../data/ligand-pdbs'
 
     # read ligand.csv and convert to pdbs
     df = pd.read_csv(LIGAND_DIR)

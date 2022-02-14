@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from preprocess import TestPreprocessor
+from src.preprocess.preprocess import TestPreprocessor
 
 
 class Model(nn.Module):

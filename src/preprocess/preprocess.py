@@ -1,24 +1,13 @@
+import subprocess
+
 import pandas as pd
-from typing import NamedTuple  # requires python version > 3.6
-from read_pdb_file import read_pdb
-from global_vars import *
-from utilities import print_v
+import torch
 
-
-class Protein(NamedTuple):
-    atom_types: list
-    xs: list
-    ys: list
-    zs: list
-
-
-class Ligand(NamedTuple):
-    smiles: str
-    atom_types: list
-    connections: dict
-    xs: list
-    ys: list
-    zs: list
+from read_pdb_file import read_pdb, read_ligand_pdb
+from src.global_vars import *
+from src.utilities import print_v
+from data_structures import Protein, Ligand
+from bind_grid import BindGrid
 
 
 # preprocessor for training
@@ -57,47 +46,53 @@ class TrainPreprocessor:
         # read ligands
         print_v("Reading ligands ... ", self.verbose)
         df = pd.read_csv(LIGAND_DIR)
-
         for i in range(len(df)):
             lid = str(df.LID[i])
             smiles = str(df.Smiles[i])
 
-            #read 3d structure
-            with open("{}/{}.pdb".format(LIGAND_PDB_DIR, lid), 'r') as file:
-                strline_L = file.readlines()
-            file.close()
-            strline_L = [strline.strip() for strline in strline_L]
-
-            atom_types, xs, ys, zs = [], [], [], []
-            connections = {}
-            zero_xyz = ('0.000', '0.000', '0.000')
-            illegal = True
-
-            for strline in strline_L:
-                tokens = strline.split()
-                if tokens[0] == "HETATM" or tokens[0] == "ATOM":
-                    atom_types.append(tokens[2])
-                    xs.append(tokens[5])
-                    ys.append(tokens[6])
-                    zs.append(tokens[7])
-                    cur_xyz = (xs[-1], ys[-1], zs[-1])
-                    if illegal and cur_xyz != zero_xyz:  # found illgal 3d structure (duplicated coords)
-                        illegal = False
-                elif tokens[0] == "CONECT":
-                    connections[tokens[1]] = [t for t in tokens[2:]]
+            illegal, atom_types, connections, xs, ys, zs = read_ligand_pdb(
+                '{}/{}.pdb'.format(LIGAND_PDB_DIR, lid))
 
             if illegal:
                 self.illegal_3d_ligands.append(lid)
             else:
                 self.ligands[lid] = Ligand(smiles, atom_types, connections, xs, ys, zs)
-
         print_v("Found {} illegal 3D ligands:\n{}\n".format(
             len(self.illegal_3d_ligands), self.illegal_3d_ligands), self.verbose)
         print_v("done.\n", self.verbose)
 
+    # generate bindgrids given a protein and a batch of ligands
+    def generate_bindgrids(self, pid, centroid, lids, smiles):
+        for i in range(len(lids)):
+            lid = lids[i]
+            # if ligand is not in generated pdbs, try creating a new one
+            if lid not in self.ligands:
+                log_file = LIGAND_PDB_DIR + "/" + "log.txt"
+                err_file = LIGAND_PDB_DIR + "/" + "errors.txt"
+                try:
+                    subprocess.run("obabel -ismi -:'{}' -o pdb -O {}.pdb --gen3d >{} 2>{}"
+                                   .format(smiles[i], LIGAND_PDB_DIR + "/" + lid, log_file, err_file),
+                                   shell=True, timeout=300)
+                except subprocess.TimeoutExpired:  # timeout after 300 secs
+                    subprocess.run("obabel -ismi -:'{}' -o pdb -O {}.pdb >{} 2>{}"
+                                   .format(smiles[i], LIGAND_PDB_DIR + "/" + lid, log_file, err_file),
+                                   shell=True)  # run without 3d generation instead
+
+                # read the newly made pdb file
+                illegal, atom_types, connections, xs, ys, zs = read_ligand_pdb(
+                    '{}/{}.pdb'.format(LIGAND_PDB_DIR, lid))
+
+                if illegal:
+                    self.illegal_3d_ligands.append(lid)
+                else:
+                    self.ligands[lid] = Ligand(smiles, atom_types, connections, xs, ys, zs)
+
+            return BindGrid(self.proteins[pid], self.ligands[lid], centroid)
+
     # preprocess all the data in this object to feed the model
-    def preprocess(self):
+    def preprocess(self, PID, centroid, LID, ligands):
         pass
+
 
 
 # Preprocessor for inference/test
@@ -120,6 +115,14 @@ if __name__ == '__main__':
     print(train_processor.proteins['1A0Q'].ys[:5])
     print(train_processor.proteins['1A0Q'].zs[:5])
 
+    # find max protein r
+    max_protein_r = 0
+    for protein in train_processor.proteins.values():
+        max_r = max(max(protein.xs), max(protein.ys), max(protein.zs))
+        if max_r > max_protein_r:
+            max_protein_r = max_r
+    print("Max Protein radius: {}".format(max_protein_r))
+
     print("\nSample Ligand:")
     print(train_processor.ligands['1'].smiles)
     print(train_processor.ligands['1'].atom_types[:5])
@@ -128,4 +131,18 @@ if __name__ == '__main__':
     print(train_processor.ligands['1'].ys[:5])
     print(train_processor.ligands['1'].zs[:5])
 
+    # find max ligand r
+    max_ligand_r = 0
+    for ligand in train_processor.ligands.values():
+        max_r = max(max(ligand.xs), max(ligand.ys), max(ligand.zs))
+        if max_r > max_ligand_r:
+            prev_ligand_r = max_ligand_r
+            max_ligand_r = max_r
+    print("Max Ligand radius: {}".format(max_ligand_r))
+
     # preprocessing
+    print("\nBuilding a sample bind grid:")
+    bind_grid = BindGrid(train_processor.proteins['1A0Q'],
+                         train_processor.ligands['1'], train_processor.centroids['1A0Q'])
+    torch.set_printoptions(profile='full')
+    print(bind_grid.grid.shape)

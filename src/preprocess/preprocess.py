@@ -8,16 +8,18 @@ from src.global_vars import *
 from src.utilities import print_v
 from data_structures import Protein, Ligand
 from bind_grid import BindGrid
+from smiles2vec import Smiles2Vec
 
 
 # preprocessor for training
 class TrainPreprocessor:
-    def __init__(self, device='cpu', verbose=False):
+    def __init__(self, smiles_dim=EMBED_DIM, device='cpu', verbose=False):
         self.device = device
         self.verbose = verbose
         self.centroids, self.ligands, self.gt_pairs, self.proteins = {}, {}, {}, {}
         self.illegal_3d_ligands = []
         self.read_objects()
+        self.smile2vec = Smiles2Vec(smiles_dim)
 
     # read the objects we are interested in
     def read_objects(self):
@@ -61,8 +63,9 @@ class TrainPreprocessor:
             len(self.illegal_3d_ligands), self.illegal_3d_ligands), self.verbose)
         print_v("done.\n", self.verbose)
 
-    # generate bindgrids given a protein and a batch of ligands
+    # generate bindgrids as tensors given a protein and a batch of ligands
     def generate_bindgrids(self, pid, centroid, lids, smiles):
+        bindgrids = []
         for i in range(len(lids)):
             lid = lids[i]
             # if ligand is not in generated pdbs, try creating a new one
@@ -87,7 +90,12 @@ class TrainPreprocessor:
                 else:
                     self.ligands[lid] = Ligand(smiles, atom_types, connections, xs, ys, zs)
 
-            return BindGrid(self.proteins[pid], self.ligands[lid], centroid)
+            bindgrids.append(BindGrid(self.proteins[pid], self.ligands[lid], centroid).grid)
+        return bindgrids
+
+    # generate embeddings as tensors for a batch of ligand smiles
+    def generate_embeddings(self, smiles):
+        return self.smile2vec.get_embeddings(smiles)
 
     # preprocess all the data in this object to feed the model
     def preprocess(self, PID, centroid, LID, ligands):
@@ -97,8 +105,8 @@ class TrainPreprocessor:
 
 # Preprocessor for inference/test
 class TestPreprocessor(TrainPreprocessor):
-    def __init__(self, device='cpu', verbose=False):
-        super().__init__(device, verbose)
+    def __init__(self, smiles_dim=64, device='cpu', verbose=False):
+        super().__init__(smiles_dim, device, verbose)
 
     def preprocess(self, PID, centroid, LID, ligands):
         data = []
@@ -146,3 +154,8 @@ if __name__ == '__main__':
                          train_processor.ligands['1'], train_processor.centroids['1A0Q'])
     torch.set_printoptions(profile='full')
     print(bind_grid.grid.shape)
+
+    print("\nGenerating 5 sample smiles embeddings with dim 64:")
+    embeds = train_processor.generate_embeddings(
+        [v.smiles for (_, v) in list(train_processor.ligands.items())[:5]])
+    print(embeds.shape)

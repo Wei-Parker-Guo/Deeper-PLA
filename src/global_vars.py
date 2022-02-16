@@ -22,9 +22,15 @@ PROTEIN_VOLUME_CH = 12
 LIGAND_VOLUME_CH = 12
 VDW_Radius = {'C': 1.70, 'N': 1.55, 'O': 1.52, 'P': 1.80, 'S': 1.80, 'F': 1.47,
               'Cl': 1.75, 'Br': 1.83, 'I': 1.98, 'H': 1.10}  # Van der Waals radius in atomic radius
-MAX_LIGAND_R = 35  # max ligand radius for defining a bind grid
+MAX_LIGAND_R = 36  # max ligand radius for defining a bind grid
 GRID_CHANNELS = 14
 
 # Mol2Vec embedding definitions
 EMBED_DIM = 76
 EMBED_PADDING_DIM = 76  # we pad the embeddings if they don't have enough components
+
+# Network Architecture Definitions
+SHUFFLE_G = 4  # number of shuffle groups in each shuffle group unit
+SHUFFLE_CHS = [MAX_LIGAND_R, 244, 488, 976]
+SHUFFLE_UNITS = [2, 3, 3]
+GRID_REG_CH = 1024  # channel number for global PW conv at regression block

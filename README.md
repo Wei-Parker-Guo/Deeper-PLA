@@ -12,7 +12,7 @@ Contact: e0926995@u.nus.edu
 ## Usage
 
 ### Environment Setup
-Additional to The project uses the following packages:
+Additional to pytorch, the project uses the following packages:
 
 **OpenBabel 3.1.0**
 ```commandline

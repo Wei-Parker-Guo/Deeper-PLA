@@ -1,6 +1,4 @@
-import torch
 from torch import nn
-from src.preprocess.preprocess import TestPreprocessor
 
 
 class Model(nn.Module):
@@ -15,7 +13,6 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.device = device
         # TODO: define your modules
-        self.test_preprocessor = TestPreprocessor(device)
 
     def forward(self, x):
         x = x.to(self.device)
@@ -40,5 +37,4 @@ class Model(nn.Module):
             If you define any object that is not a torch.nn module, you should also explicitly send this object to self.device.
         """
         # TODO: Implement the inference function
-        data = self.test_preprocessor.preprocess(PID, centroid, LIDs, ligands)
-        return torch.rand(len(LIDs), 1)
+

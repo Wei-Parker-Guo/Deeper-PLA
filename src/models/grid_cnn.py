@@ -4,6 +4,7 @@ from collections import OrderedDict
 import torch
 from torch import nn
 from torchsummary import summary
+
 from src.global_vars import *
 
 
@@ -91,28 +92,21 @@ class ShuffleGroup(nn.Module):
         return x
 
 
-class GridRegressionBlock(nn.Module):
+class GridRegBlock(nn.Module):
     def __init__(self, device='cpu'):
-        super(GridRegressionBlock, self).__init__()
+        super(GridRegBlock, self).__init__()
         self.device = device
         self.model = nn.Sequential(
             nn.Dropout(0.2),
-            nn.Conv3d(SHUFFLE_CHS[-1], GRID_REG_CH, (1, 1, 1), (1, 1, 1), device=self.device),
-            nn.BatchNorm3d(GRID_REG_CH, device=self.device),
+            nn.Conv3d(SHUFFLE_CHS[-1], REG_CH, (1, 1, 1), (1, 1, 1), device=self.device),
+            nn.BatchNorm3d(REG_CH, device=self.device),
             nn.LeakyReLU(),
             nn.Dropout(0.2),
         )
-        self.linear_out = nn.Linear(GRID_REG_CH, 1, device=self.device)
 
     def forward(self, x):
         x = self.model.forward(x)
-        # forward through the shared weights FC layer for regression
-        x = torch.flatten(x, start_dim=1)
-        xs = torch.split(x, GRID_REG_CH, dim=1)
-        r = torch.Tensor([])
-        for i in xs:
-            r = torch.cat((r, self.linear_out.forward(i)), dim=1)
-        return r
+        return x
 
 
 class GridCNN(nn.Module):
@@ -129,8 +123,8 @@ class GridCNN(nn.Module):
         for i in range(len(SHUFFLE_CHS) - 1):
             mod = ShuffleGroup(SHUFFLE_UNITS[i], SHUFFLE_CHS[i], SHUFFLE_CHS[i + 1], self.device)
             self.model.add_module('ShuffleGroup{}'.format(i), mod)
-        # Global Affinity Regression Block
-        self.model.add_module('RegressionBlock', GridRegressionBlock(self.device))
+        # Grid Regression Block to process output as 1x1024 vectors
+        self.model.add_module('GridRegBlock', GridRegBlock(self.device))
 
     def forward(self, x):
         xs = self.model.forward(x)

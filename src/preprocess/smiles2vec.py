@@ -54,4 +54,4 @@ class Smiles2Vec:
         # project using pca
         reduced_arr = torch.Tensor(np.array(
             [self.pca_model.fit_transform(sublist) for sublist in padded_arr]))
-        return reduced_arr
+        return reduced_arr.reshape(len(smiles), 1, EMBED_PADDING_DIM, EMBED_PADDING_DIM)

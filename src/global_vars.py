@@ -1,4 +1,5 @@
-# this file just defines the global variable we are gonna use in the project
+# this file just defines the global variable we are going to use in the project
+# it also includes all the hyper parameters modifiable for the model.
 
 # directories
 CENTROIDS_DIR = '../data/centroids.csv'
@@ -13,6 +14,7 @@ HYDROPHOBIC = 0  # hydrophobic atom code
 POLAR = 1  # polar atom code
 HYDROPHOBIC_ATOMS = {'C'}
 POLAR_ATOMS = {'O', 'N'}
+AUGMENT_ROTATION = 3  # augment data by rotating the grid for another three times
 # the atom types are derived from the Arpeggio paper for interactions of interest
 # these dicts record their names and channel number
 # see reference in README.md
@@ -33,4 +35,6 @@ EMBED_PADDING_DIM = 76  # we pad the embeddings if they don't have enough compon
 SHUFFLE_G = 4  # number of shuffle groups in each shuffle group unit
 SHUFFLE_CHS = [MAX_LIGAND_R, 244, 488, 976]
 SHUFFLE_UNITS = [2, 3, 3]
-GRID_REG_CH = 1024  # channel number for global PW conv at regression block
+REG_CH = 1024  # channel number for global PW conv at regression block
+SMILES_CNN_CH = [1, 64, 128, 256]
+SMILES_CNN_G = [3, 3, 3]

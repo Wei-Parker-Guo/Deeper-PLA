@@ -1,7 +1,9 @@
 import math
+import random
+
 import torch
+from src.preprocess.data_structures import Protein, Ligand
 from src.global_vars import *
-from data_structures import Protein, Ligand
 
 
 # PCMax algorithm to convert atom to voxel representation
@@ -14,6 +16,7 @@ def pcmax(r_vdw, r):
 class BindGrid:
     def __init__(self, protein: Protein, ligand: Ligand, binding_loc):
         self.grid = torch.zeros(size=(GRID_CHANNELS, MAX_LIGAND_R, MAX_LIGAND_R, MAX_LIGAND_R))
+        self.augmented_grids = torch.Tensor()
         self.binding_loc = binding_loc
         self.cache = {}  # cache repetitive calculations
         self.create_cache()
@@ -31,22 +34,22 @@ class BindGrid:
         # protein
         for i in range(len(protein.atom_types)):
             atom_t = protein.atom_types[i]
-            x, y, z = protein.xs[i], protein.ys[i], protein.zs[i]
-            # record occupancy channel
-            self.record_occupancy(x, y, z, VDW_Radius[atom_t], PROTEIN_VOLUME_CH, False)
-            # record atom channel
             if atom_t in PROTEIN_ATOMS:
+                x, y, z = protein.xs[i], protein.ys[i], protein.zs[i]
+                # record occupancy channel
+                self.record_occupancy(x, y, z, VDW_Radius[atom_t], PROTEIN_VOLUME_CH, False)
+                # record atom channel
                 atom_c = PROTEIN_ATOMS[atom_t]  # atom channel number
                 r_vdw = VDW_Radius[atom_t]
                 self.record_occupancy(x, y, z, r_vdw, atom_c, False)
         # ligand
         for i in range(len(ligand.atom_types)):
             atom_t = ligand.atom_types[i]
-            x, y, z = ligand.xs[i], ligand.ys[i], ligand.zs[i]
-            # record occupancy channel
-            self.record_occupancy(x, y, z, VDW_Radius[atom_t], LIGAND_VOLUME_CH, True)
-            # record atom channel
             if atom_t in LIGAND_ATOMS:
+                x, y, z = ligand.xs[i], ligand.ys[i], ligand.zs[i]
+                # record occupancy channel
+                self.record_occupancy(x, y, z, VDW_Radius[atom_t], LIGAND_VOLUME_CH, True)
+                # record atom channel
                 atom_c = LIGAND_ATOMS[atom_t]  # atom channel number
                 r_vdw = VDW_Radius[atom_t]
                 self.record_occupancy(x, y, z, r_vdw, atom_c, False)
@@ -76,3 +79,14 @@ class BindGrid:
                     iy = int(j - self.binding_loc[1] + MAX_LIGAND_R // 2)
                     iz = int(k - self.binding_loc[2] + MAX_LIGAND_R // 2)
                     self.grid[channel][ix][iy][iz] += contrib
+
+    # data augmentation by random 90x degree rotation, return a batch of augmented grids as tensor
+    def rotation_augment(self):
+        grids = [self.grid]
+        for i in range(AUGMENT_ROTATION):
+            r = torch.rot90(self.grid, random.randint(0, i + 1), [1, 2])
+            r = torch.rot90(r, random.randint(0, i + 1), [2, 3])
+            r = torch.rot90(r, random.randint(0, i + 1), [3, 1])
+            grids.append(r)
+        self.augmented_grids = torch.stack(grids)
+        return self.augmented_grids

@@ -33,7 +33,7 @@ def read_ligand_pdb(filename: str):
     for strline in strline_L:
         tokens = strline.split()
         if tokens[0] == "HETATM" or tokens[0] == "ATOM":
-            atom_types.append(tokens[2])
+            atom_types.append(tokens[-1])
             xs.append(float(tokens[5]))
             ys.append(float(tokens[6]))
             zs.append(float(tokens[7]))

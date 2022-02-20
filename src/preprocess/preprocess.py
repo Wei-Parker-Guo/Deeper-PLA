@@ -3,12 +3,12 @@ import subprocess
 import pandas as pd
 import torch
 
-from read_pdb_file import read_pdb, read_ligand_pdb
-from src.global_vars import *
+from src.preprocess.read_pdb_file import read_pdb, read_ligand_pdb
 from src.utilities import print_v
-from data_structures import Protein, Ligand
-from bind_grid import BindGrid
-from smiles2vec import Smiles2Vec
+from src.global_vars import *
+from src.preprocess.data_structures import Protein, Ligand
+from src.preprocess.bind_grid import BindGrid
+from src.preprocess.smiles2vec import Smiles2Vec
 
 
 # preprocessor for training
@@ -102,7 +102,6 @@ class TrainPreprocessor:
         pass
 
 
-
 # Preprocessor for inference/test
 class TestPreprocessor(TrainPreprocessor):
     def __init__(self, smiles_dim=64, device='cpu', verbose=False):
@@ -114,6 +113,8 @@ class TestPreprocessor(TrainPreprocessor):
 
 
 if __name__ == '__main__':
+    torch.set_printoptions(profile='full')
+
     # construction and reading
     train_processor = TrainPreprocessor(verbose=True)
 
@@ -149,12 +150,18 @@ if __name__ == '__main__':
     print("Max Ligand radius: {}".format(max_ligand_r))
 
     # preprocessing
+
+    # building a sample grid
     print("\nBuilding a sample bind grid:")
     bind_grid = BindGrid(train_processor.proteins['1A0Q'],
                          train_processor.ligands['1'], train_processor.centroids['1A0Q'])
-    torch.set_printoptions(profile='full')
     print(bind_grid.grid.shape)
+    # augmenting a sample grid
+    print("\nAugmenting the sample bind grid:")
+    bind_grid.rotation_augment()
+    print(bind_grid.augmented_grids.shape)
 
+    # building sample smiles embeddings
     print("\nGenerating 5 sample smiles embeddings with dim 64:")
     embeds = train_processor.generate_embeddings(
         [v.smiles for (_, v) in list(train_processor.ligands.items())[:5]])

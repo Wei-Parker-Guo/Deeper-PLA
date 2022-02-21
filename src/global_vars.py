@@ -14,7 +14,7 @@ HYDROPHOBIC = 0  # hydrophobic atom code
 POLAR = 1  # polar atom code
 HYDROPHOBIC_ATOMS = {'C'}
 POLAR_ATOMS = {'O', 'N'}
-AUGMENT_ROTATION = 3  # augment data by rotating the grid for another three times
+AUGMENT_ROTATION = 2  # augment data by rotating the grid for another n times
 # the atom types are derived from the Arpeggio paper for interactions of interest
 # these dicts record their names and channel number
 # see reference in README.md

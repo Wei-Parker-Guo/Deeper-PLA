@@ -84,9 +84,9 @@ class BindGrid:
     def rotation_augment(self):
         grids = [self.grid]
         for i in range(AUGMENT_ROTATION):
-            r = torch.rot90(self.grid, random.randint(0, i + 1), [1, 2])
-            r = torch.rot90(r, random.randint(0, i + 1), [2, 3])
-            r = torch.rot90(r, random.randint(0, i + 1), [3, 1])
+            r = torch.rot90(self.grid, random.randint(0, 3), [1, 2])
+            r = torch.rot90(r, random.randint(0, 3), [2, 3])
+            r = torch.rot90(r, random.randint(0, 3), [3, 1])
             grids.append(r)
         self.augmented_grids = torch.stack(grids)
         return self.augmented_grids

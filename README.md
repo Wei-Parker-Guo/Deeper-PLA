@@ -28,6 +28,12 @@ conda install rdkit
 pip install torch-summary
 ```
 
+**Ipywidgets**
+```commandline
+conda install -c conda-forge ipywidgets
+jupyter nbextension enable --py widgetsnbextension
+```
+
 ### Compiling
 There is no need to specify source directory since all the modules are referenced with namespace packages.
 

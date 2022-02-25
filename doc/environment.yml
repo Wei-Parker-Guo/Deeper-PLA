@@ -3,13 +3,10 @@ channels:
   - defaults
 dependencies:
   - python=3.8
-  - pytorch
-  - torchvision
   - matplotlib
   - jupyterlab
   - scikit-learn
   - pandas
   - tqdm
-  - rdkit
   - ipywidgets
 prefix: /Users/mac/opt/anaconda3/envs/coursework

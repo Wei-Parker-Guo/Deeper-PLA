@@ -4,3 +4,4 @@
 __pycache__
 data/ligand-pdbs.zip
 .ipynb_checkpoints
+data/generated

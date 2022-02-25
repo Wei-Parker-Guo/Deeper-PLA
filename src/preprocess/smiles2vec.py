@@ -44,14 +44,14 @@ class Smiles2Vec:
         # pad with zeros for constant size
         padded_arr = []
         for i in range(len(raw_vec)):
-            l = EMBED_PADDING_DIM - len(raw_vec[i])
-            if l >= 0:
+            pad = EMBED_PADDING_DIM - len(raw_vec[i])
+            if pad >= 0:
                 padded_arr.append(np.pad(raw_vec[i],
-                                         [(0, l), (0, 0)],
+                                         [(0, pad), (0, 0)],
                                          mode='constant', constant_values=0).tolist())
             else:  # normally we don't need to truncate, put here just in case
                 padded_arr.append(np.array(raw_vec[i][:EMBED_PADDING_DIM]).tolist())
         # project using pca
         reduced_arr = torch.Tensor(np.array(
             [self.pca_model.fit_transform(sublist) for sublist in padded_arr]))
-        return reduced_arr.reshape(len(smiles), 1, EMBED_PADDING_DIM, EMBED_PADDING_DIM)
+        return reduced_arr.reshape(len(reduced_arr), 1, EMBED_PADDING_DIM, EMBED_PADDING_DIM)

@@ -162,7 +162,7 @@ if __name__ == '__main__':
     print(bind_grid.augmented_grids.shape)
 
     # building sample smiles embeddings
-    print("\nGenerating 5 sample smiles embeddings with dim 64:")
+    print("\nGenerating 5 sample smiles embeddings with dim 76:")
     embeds = train_processor.generate_embeddings(
         [v.smiles for (_, v) in list(train_processor.ligands.items())[:5]])
     print(embeds.shape)

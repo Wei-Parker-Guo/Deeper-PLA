@@ -2,11 +2,12 @@
 # Further reference: https://github.com/samoturk/mol2vec
 import numpy as np
 import torch
+import pandas as pd
 from gensim.models import word2vec
 from rdkit import Chem
 from mol2vec.features import mol2alt_sentence
 from sklearn.decomposition import PCA
-from src.global_vars import MOL2VEC_MODEL_DIR, EMBED_PADDING_DIM
+from src.global_vars import MOL2VEC_MODEL_DIR, EMBED_PADDING_DIM, LIGAND_DIR, EMBED_DIM
 
 
 # takes in a list of smiles and return their embeddings given an output vector dimension
@@ -36,10 +37,8 @@ class Smiles2Vec:
         for sublist in identifiers:
             r = []
             for x in sublist:
-                try:
-                    r.append(self.model.wv.word_vec(x))
-                except:
-                    continue
+                if x in self.model.wv.key_to_index:
+                    r.append(self.model.wv.get_vector(x))
             raw_vec.append(r)
         # pad with zeros for constant size
         padded_arr = []
@@ -55,3 +54,18 @@ class Smiles2Vec:
         reduced_arr = torch.Tensor(np.array(
             [self.pca_model.fit_transform(sublist) for sublist in padded_arr]))
         return reduced_arr.reshape(len(reduced_arr), 1, EMBED_PADDING_DIM, EMBED_PADDING_DIM)
+
+
+if __name__ == '__main__':
+    print("Reading ligands ... ", end='')
+    df = pd.read_csv(LIGAND_DIR)
+    smiles_list = []
+    for i in range(len(df)):
+        lid = str(df.LID[i])
+        smiles = str(df.Smiles[i])
+        smiles_list.append(smiles)
+    print(" done.")
+    smiles2vec = Smiles2Vec(EMBED_DIM)
+    embeds = smiles2vec.get_embeddings(smiles_list)
+    print(embeds[:5])
+

@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     print("Trying to fix them using RdKit ... ", end='')
     for lid in illegal_3d_ligands:
-        smiles = str(df.Smiles[lid])
+        smiles = df.Smiles[lid]
         try:
             mol = Chem.MolFromSmiles(smiles)
             mol = Chem.AddHs(mol)

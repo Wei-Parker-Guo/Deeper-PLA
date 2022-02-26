@@ -55,7 +55,6 @@ class ProteinLigandDataset(Dataset):
         embeds = self.train_processor.generate_embeddings(smiles)
         for i in range(len(labels)):
             ie = i // (AUGMENT_ROTATION + 1)
-            ie = ie if ie < len(embeds) else len(embeds) - 1
             self.data.append(DataItem(grids[i], embeds[ie], labels[i]))
 
     def __len__(self):

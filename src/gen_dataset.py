@@ -17,6 +17,14 @@ class DataItem(NamedTuple):
 
 
 class ProteinLigandDataset(Dataset):
+    def __init__(self):
+        self.pairs = []  # a list of pairs from querying pair.csv
+        self.batch_size = 0
+        self.train_processor = None
+        self.rot_aug = True  # augment data by random grid rotation
+        self.data = []
+        self.gen_data()
+
     def __init__(self, pairs, train_processor, batch_size, rot_aug=True):
         self.pairs = pairs  # a list of pairs from querying pair.csv
         self.batch_size = batch_size
@@ -56,6 +64,12 @@ class ProteinLigandDataset(Dataset):
         for i in range(len(labels)):
             ie = i // (AUGMENT_ROTATION + 1)
             self.data.append(DataItem(grids[i], embeds[ie], labels[i]))
+
+    # concat itself with another dataset
+    def concat(self, other):
+        self.data += other.data
+        self.pairs += other.pairs
+        self.batch_size += other.batch_size
 
     def __len__(self):
         return len(self.data)

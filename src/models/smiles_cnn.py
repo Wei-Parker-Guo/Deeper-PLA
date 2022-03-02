@@ -15,10 +15,10 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
         self.device = device
         self.model = nn.Sequential(
-            nn.BatchNorm2d(dim),
+            nn.BatchNorm2d(dim, device=self.device),
             nn.ReLU(),
             nn.Conv2d(dim, dim, ksize, stride, pad, device=self.device),
-            nn.BatchNorm2d(dim),
+            nn.BatchNorm2d(dim, device=self.device),
             nn.ReLU(),
             nn.Conv2d(dim, dim, ksize, stride, pad, device=self.device)
         )
@@ -39,10 +39,10 @@ class DSResidualBlock(nn.Module):
             nn.AvgPool2d(ksize1, stride1, pad)
         )
         self.b2 = nn.Sequential(
-            nn.BatchNorm2d(in_dim),
+            nn.BatchNorm2d(in_dim, device=self.device),
             nn.ReLU(),
             nn.Conv2d(in_dim, out_dim, ksize1, stride1, pad, device=self.device),
-            nn.BatchNorm2d(out_dim),
+            nn.BatchNorm2d(out_dim, device=self.device),
             nn.ReLU(),
             nn.Conv2d(out_dim, out_dim, ksize2, stride2, pad, device=self.device)
         )
@@ -74,19 +74,23 @@ class SmilesCNN(nn.Module):
         super(SmilesCNN, self).__init__()
         self.device = device
         self.model = nn.Sequential(OrderedDict([
-            ('GlobalConv', nn.Conv2d(SMILES_CNN_CH[0], SMILES_CNN_CH[1], (7, 7), (2, 2), 1))
+            ('GlobalConv', nn.Conv2d(SMILES_CNN_CH[0], SMILES_CNN_CH[1], (7, 7), (2, 2), 1, device=self.device)),
+            ('Pool', nn.AvgPool2d((3, 3), (2, 2), padding=1))
         ]))
         for i in range(1, len(SMILES_CNN_CH) - 1):
             g = ResidualGroup(SMILES_CNN_CH[i], SMILES_CNN_CH[i+1], SMILES_CNN_G[i-1], self.device)
             self.model.add_module('ResGroup{}'.format(i-1), g)
         # head section
-        self.model.add_module('HeadConv', nn.Conv2d(SMILES_CNN_CH[-1], REG_CH,
-                                                    (3, 3), (2, 2), padding=1, device=self.device))
+        self.model.add_module('Dropout', nn.Dropout(0.2))
+        self.model.add_module('HeadConv',
+                              nn.Conv2d(SMILES_CNN_CH[-1], REG_CH, (3, 3), (1, 1),
+                                        padding=1, device=self.device))
+        self.model.add_module('HeadAvgPool', nn.AvgPool2d((3, 3), (1, 1), padding=1))
 
     def forward(self, x):
         return self.model.forward(x)
 
 
 if __name__ == '__main__':
-    model = SmilesCNN()
-    summary(model, (1, 76, 76), 128)
+    model = SmilesCNN(device='cuda')
+    summary(model, (1, 76, 76), 64)

@@ -9,19 +9,30 @@ class RegHead(nn.Module):
     def __init__(self, device='cpu'):
         super(RegHead, self).__init__()
         self.device = device
-        self.model = nn.Linear(REG_CH, 1, device=self.device)
+        self.model = nn.Sequential(
+            nn.Dropout(0.2),
+            nn.Linear(REG_CH, 1, device=self.device),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
         # slice x into vectors with size of (1024,), repetitively forward with shared weights
-        xs = torch.split(x, REG_CH, dim=1)
-        r = torch.Tensor([])
-        for i in xs:
-            r = torch.cat((r, self.model.forward(i)), dim=1)
-        return r
+        bs = x.shape[0]
+        if self.training:
+            xs = x.reshape(-1, REG_CH)
+            r = self.model.forward(xs)
+            return r.reshape(bs, -1)
+        # if not training, average vectors into one and do prediction
+        else:
+            xs = x.reshape(bs, -1, REG_CH)
+            xs = torch.mean(xs, dim=1)
+            r = self.model.forward(xs)
+            return r
 
 
 if __name__ == '__main__':
     model = RegHead()
-    x = torch.zeros((4, 1024 * (3 * 3 * 3 + 5 * 5)))
+    model.train(True)
+    x = torch.randn((4, 1024 * (3 * 3 * 3 + 5 * 5)))
     x = model.forward(x)
-    print(x.size())
+    print(x)

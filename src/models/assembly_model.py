@@ -17,8 +17,8 @@ class AssemblyModel(nn.Module):
 
     # x1 is grid and x2 is smiles
     def forward(self, x1, x2):
-        x1.to(self.device)
-        x2.to(self.device)
+        x1 = x1.to(self.device)
+        x2 = x2.to(self.device)
         g = torch.flatten(self.grid_cnn.forward(x1), start_dim=1)
         s = torch.flatten(self.smiles_cnn.forward(x2), start_dim=1)
         x = torch.cat((g, s), dim=1)
@@ -30,5 +30,5 @@ if __name__ == '__main__':
     model = AssemblyModel()
     xt1 = torch.zeros((4, 14, 36, 36, 36))
     xt2 = torch.zeros((4, 1, 76, 76))
-    x = model.forward(xt1, xt2)
-    print(x.size())
+    xt = model.forward(xt1, xt2)
+    print(xt.size())

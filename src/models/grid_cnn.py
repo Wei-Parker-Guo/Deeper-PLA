@@ -28,14 +28,16 @@ class BasicUnit(nn.Module):
             nn.BatchNorm3d(oc, device=self.device),
             nn.LeakyReLU()
         )
-        self.ch_shuffle = nn.ChannelShuffle(SHUFFLE_G)
 
     def forward(self, x):
         b1, b2 = torch.split(x, self.out_channel // 2, dim=1)
         # feed b2 to branch 2
         b2 = self.branch2.forward(b2)
         # concat, shuffle and return
-        return self.ch_shuffle.forward(torch.cat((b1, b2), dim=1))
+        x = torch.cat((b1, b2), dim=1)
+        N, C, H, W, D = x.shape
+        g = SHUFFLE_G
+        return x.view(N, g, C // g, H, W, D).permute(0, 2, 1, 3, 4, 5).reshape(N, C, H, W, D)
 
 
 class DownSampleUnit(nn.Module):
@@ -66,7 +68,6 @@ class DownSampleUnit(nn.Module):
             nn.BatchNorm3d(oc, device=self.device),
             nn.LeakyReLU()
         )
-        self.ch_shuffle = nn.ChannelShuffle(SHUFFLE_G)
 
     def forward(self, x):
         # feed branch 1
@@ -74,7 +75,10 @@ class DownSampleUnit(nn.Module):
         # feed branch 2
         b2 = self.branch2.forward(x)
         # concat, shuffle and return
-        return self.ch_shuffle.forward(torch.cat((b1, b2), dim=1))
+        x = torch.cat((b1, b2), dim=1)
+        N, C, H, W, D = x.shape
+        g = SHUFFLE_G
+        return x.view(N, g, C // g, H, W, D).permute(0, 2, 1, 3, 4, 5).reshape(N, C, H, W, D)
 
 
 class ShuffleGroup(nn.Module):
@@ -101,7 +105,6 @@ class GridRegBlock(nn.Module):
             nn.Conv3d(SHUFFLE_CHS[-1], REG_CH, (1, 1, 1), (1, 1, 1), device=self.device),
             nn.BatchNorm3d(REG_CH, device=self.device),
             nn.LeakyReLU(),
-            nn.Dropout(0.2),
         )
 
     def forward(self, x):
@@ -132,5 +135,5 @@ class GridCNN(nn.Module):
 
 
 if __name__ == '__main__':
-    grid_cnn = GridCNN()
-    summary(grid_cnn, (14, 36, 36, 36), 128)
+    grid_cnn = GridCNN(device='cuda')
+    summary(grid_cnn, (14, 36, 36, 36), 64)

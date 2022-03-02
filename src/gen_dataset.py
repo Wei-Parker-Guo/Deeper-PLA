@@ -17,21 +17,14 @@ class DataItem(NamedTuple):
 
 
 class ProteinLigandDataset(Dataset):
-    def __init__(self):
-        self.pairs = []  # a list of pairs from querying pair.csv
-        self.batch_size = 0
-        self.train_processor = None
-        self.rot_aug = True  # augment data by random grid rotation
-        self.data = []
-        self.gen_data()
-
     def __init__(self, pairs, train_processor, batch_size, rot_aug=True):
         self.pairs = pairs  # a list of pairs from querying pair.csv
         self.batch_size = batch_size
         self.train_processor = train_processor
         self.rot_aug = rot_aug  # augment data by random grid rotation
         self.data = []
-        self.gen_data()
+        if train_processor is not None:
+            self.gen_data()
 
     # based on the given pairs, generate the full dataset with both true and false pairs
     def gen_data(self):

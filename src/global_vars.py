@@ -36,5 +36,5 @@ SHUFFLE_G = 4  # number of shuffle groups in each shuffle group unit
 SHUFFLE_CHS = [MAX_LIGAND_R, 244, 488, 976]
 SHUFFLE_UNITS = [2, 3, 3]
 REG_CH = 1024  # channel number for global PW conv at regression block
-SMILES_CNN_CH = [1, 64, 128, 256]
-SMILES_CNN_G = [3, 3, 3]
+SMILES_CNN_CH = [1, 64, 128, 256, 512]
+SMILES_CNN_G = [2, 3, 3, 3]

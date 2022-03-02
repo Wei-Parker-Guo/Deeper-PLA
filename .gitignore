@@ -6,3 +6,4 @@ data/ligand-pdbs.zip
 .ipynb_checkpoints
 data/generated
 data.zip
+model_*

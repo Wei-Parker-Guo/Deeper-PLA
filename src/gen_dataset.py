@@ -1,7 +1,5 @@
 # file for generating datasets with multi threading
 import torch
-
-# define a custom dataset format for our data
 import random
 import pandas as pd
 from typing import NamedTuple
@@ -10,6 +8,7 @@ from src.preprocess.bind_grid import BindGrid
 from src.global_vars import AUGMENT_ROTATION
 
 
+# define a custom dataset format for our data
 class DataItem(NamedTuple):
     grid: torch.Tensor
     embed: torch.Tensor

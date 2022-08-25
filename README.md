@@ -1,13 +1,11 @@
 # Predicting Protein-Ligand Binding Affinity
-A cs5242 project.
+Molecular recognition between proteins and ligands plays an important role in many biological processes, such as membrane receptor signaling and enzyme catalysis. Predicting the structures of protein-ligand complexes and finding ligands by virtual screening of small molecule databases are two long-standing goals in molecular biophysics and medicinal chemistry. Knowledge-based statistical potentials have been developed for modeling protein-ligand interactions. They are based on distributions of intermolecular features in large databases of protein-ligand complexes.
 
 ## Implementor
 
 Name: Wei Guo
 
-IDs: A0248546U, E0926995
-
-Contact: e0926995@u.nus.edu
+Contact: wei.parker.guo.sg@gmail.com
 
 ## Usage
 
